@@ -65,7 +65,7 @@ def setup():
     stroke(255, 255, 255)
 
 def draw():
-    # clear()
+    clear()
 
     ball.draw()
     for mirr in mirrors:
@@ -82,10 +82,14 @@ def draw():
             
     ball.move()
     
-        if ball.pos.x < 0:
+    if ball.pos.x < 0:
         ball.pos.x = w
     elif ball.pos.x > w:
         ball.pos.x = 0
+    elif ball.pos.y < 0:
+        ball.pos.y = h
+    elif ball.pos.y > h:
+        ball.pos.y = 0
     
     for mirr in mirrors:
         u, d, p = dist_point_to_line(mirr.p1, mirr.p2, ball.pos)
