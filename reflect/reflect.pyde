@@ -31,7 +31,7 @@ class Ball(object):
     def draw(self):
         r = self.ext / 2
         f1 = self.pos
-        f2 = f1 + self.vel * self.ext
+        f2 = f1 + self.vel * self.ext / 2
         line(f1.x, f1.y, f2.x, f2.y)
         circle(self.pos.x, self.pos.y, self.ext)
 
@@ -43,7 +43,7 @@ class Mirror(object):
         line(self.p1.x, self.p1.y, self.p2.x, self.p2.y)
 
 
-ball = Ball(PVector(w/4, h/2), PVector(4, -0.75), PVector(0, 0), 10)
+ball = Ball(PVector(w/4, h/2), PVector(2, 0), PVector(0, 0), 10)
 mirrors = []
 
 click1 = 0
@@ -93,7 +93,7 @@ def draw():
     
     for mirr in mirrors:
         u, d, p = dist_point_to_line(mirr.p1, mirr.p2, ball.pos)
-        if d <= ball.ext / 2 and mirr.p1.x < ball.pos.x < mirr.p2.x:
+        if d <= ball.ext / 2 and (mirr.p1.x < ball.pos.x < mirr.p2.x or mirr.p1.y < ball.pos.y < mirr.p2.y):
             a, b = ball.vel, mirr.p2 - mirr.p1
             print(u, d, p)
             circle(p.x, p.y, 10)
