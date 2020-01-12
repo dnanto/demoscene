@@ -29,16 +29,10 @@ class Ball(object):
     
     def draw(self):
         r = self.ext / 2
-        f1 = self.pos - PVector(0, r)
-        f2 = f1 + self.vel * 2 * self.ext
-        line(f1.x, f1.y, f2.x, f2.y)
         f1 = self.pos
-        f2 = f1 + self.vel * 2 * self.ext
+        f2 = f1 + self.vel * self.ext
         line(f1.x, f1.y, f2.x, f2.y)
         circle(self.pos.x, self.pos.y, self.ext)
-        f1 = self.pos + PVector(0, r)
-        f2 = f1 + self.vel * 2 * self.ext
-        line(f1.x, f1.y, f2.x, f2.y)
 
 class Mirror(object):
     def __init__(self, p1, p2):
@@ -48,12 +42,12 @@ class Mirror(object):
         line(self.p1.x, self.p1.y, self.p2.x, self.p2.y)
 
 
-ball = Ball(PVector(w/4, h/2), PVector(1.25, -0.75), PVector(0, 0), 100)
-mirrors = [Mirror(PVector(100, 0), PVector(w, 700))]
+ball = Ball(PVector(w/4, h/2), PVector(1, -0.75), PVector(0, 0), 10)
+mirrors = []
 
 clicked = 0
 def mousePressed():
-    global clicked
+    global clicked, mirrors
     if mouseButton == LEFT:
         clicked = PVector(mouseX, mouseY)
     elif mouseButton == RIGHT:
@@ -76,9 +70,9 @@ def draw():
     
     if keyPressed:
         if keyCode == LEFT:
-            ball.vel.rotate(-radians(1))
+            ball.vel.rotate(-radians(5))
         if keyCode == RIGHT:
-            ball.vel.rotate(radians(1))
+            ball.vel.rotate(radians(5))
     
     for mirr in mirrors:
         u, d, p = dist_point_to_line(mirr.p1, mirr.p2, ball.pos) 
@@ -89,7 +83,7 @@ def draw():
             line(p.x, p.y, ball.pos.x, ball.pos.y)
             n = (ball.pos - p).normalize()
             d = ball.vel
-            ball.pos.add(n*(ball.ext/2))
+            ball.pos.add(n * (ball.ext / 2))
             ball.vel = d - 2 * (d.dot(n)) * n
         else:
             ball.move()
