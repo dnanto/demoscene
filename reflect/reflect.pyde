@@ -3,6 +3,7 @@ from random import randint
 # http://paulbourke.net/geometry/pointlineplane/
 # https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line#Line_defined_by_two_points
 # https://math.stackexchange.com/questions/12745/how-do-you-calculate-the-unit-vector-between-two-points
+# http://www.jeffreythompson.org/collision-detection/line-point.php
 
 w = 1000
 h = 1000
@@ -42,16 +43,18 @@ class Mirror(object):
         line(self.p1.x, self.p1.y, self.p2.x, self.p2.y)
 
 
-ball = Ball(PVector(w/4, h/2), PVector(1, -0.75), PVector(0, 0), 10)
+ball = Ball(PVector(w/4, h/2), PVector(4, -0.75), PVector(0, 0), 10)
 mirrors = []
 
-clicked = 0
+click1 = 0
 def mousePressed():
-    global clicked, mirrors
+    global click1, mirrors
     if mouseButton == LEFT:
-        clicked = PVector(mouseX, mouseY)
+        click1 = PVector(mouseX, mouseY)
     elif mouseButton == RIGHT:
-        mirrors.append(Mirror(clicked, PVector(mouseX, mouseY)))
+        click2 = PVector(mouseX, mouseY)
+        click1, click2 = (click1, click2) if click1.x < click2.x else (click2, click1)
+        mirrors.append(Mirror(click1, click2))
 
 def setup():
     frameRate(60)
@@ -62,21 +65,31 @@ def setup():
     stroke(255, 255, 255)
 
 def draw():
-    clear()
+    # clear()
 
     ball.draw()
     for mirr in mirrors:
         mirr.draw()
     
     if keyPressed:
-        if keyCode == LEFT:
-            ball.vel.rotate(-radians(5))
-        if keyCode == RIGHT:
-            ball.vel.rotate(radians(5))
+        if key == CODED:
+            if keyCode == LEFT:
+                ball.vel.rotate(-radians(5))
+            elif keyCode == RIGHT:
+                ball.vel.rotate(radians(5))
+        elif key == " ":
+            ball.pos = PVector(w / 2, h / 2)
+            
+    ball.move()
+    
+        if ball.pos.x < 0:
+        ball.pos.x = w
+    elif ball.pos.x > w:
+        ball.pos.x = 0
     
     for mirr in mirrors:
-        u, d, p = dist_point_to_line(mirr.p1, mirr.p2, ball.pos) 
-        if d <= ball.ext / 2:
+        u, d, p = dist_point_to_line(mirr.p1, mirr.p2, ball.pos)
+        if d <= ball.ext / 2 and mirr.p1.x < ball.pos.x < mirr.p2.x:
             a, b = ball.vel, mirr.p2 - mirr.p1
             print(u, d, p)
             circle(p.x, p.y, 10)
@@ -85,9 +98,7 @@ def draw():
             d = ball.vel
             ball.pos.add(n * (ball.ext / 2))
             ball.vel = d - 2 * (d.dot(n)) * n
-        else:
-            ball.move()
-            
+
     
     
     
