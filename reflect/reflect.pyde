@@ -49,7 +49,15 @@ class Mirror(object):
 
 
 ball = Ball(PVector(w/4, h/2), PVector(1.25, -0.75), PVector(0, 0), 100)
-mirr = Mirror(PVector(100, 0), PVector(w, 700))
+mirrors = [Mirror(PVector(100, 0), PVector(w, 700))]
+
+clicked = 0
+def mousePressed():
+    global clicked
+    if mouseButton == LEFT:
+        clicked = PVector(mouseX, mouseY)
+    elif mouseButton == RIGHT:
+        mirrors.append(Mirror(clicked, PVector(mouseX, mouseY)))
 
 def setup():
     frameRate(60)
@@ -63,7 +71,8 @@ def draw():
     clear()
 
     ball.draw()
-    mirr.draw()
+    for mirr in mirrors:
+        mirr.draw()
     
     if keyPressed:
         if keyCode == LEFT:
@@ -71,22 +80,19 @@ def draw():
         if keyCode == RIGHT:
             ball.vel.rotate(radians(1))
     
-    u, d, p = dist_point_to_line(mirr.p1, mirr.p2, ball.pos) 
-    if d <= ball.ext / 2:
-        a, b = ball.vel, mirr.p2 - mirr.p1
-        print(u, d, p)
-        circle(p.x, p.y, 10)
-        line(p.x, p.y, ball.pos.x, ball.pos.y)
-        
-        n = (ball.pos - p).normalize()
-        d = ball.vel
-        
-        ball.pos.add(n*(ball.ext/2))
-        
-        ball.vel = d - 2 * (d.dot(n)) * n 
-        # print(ball.vel)
-    else:
-        ball.move()
+    for mirr in mirrors:
+        u, d, p = dist_point_to_line(mirr.p1, mirr.p2, ball.pos) 
+        if d <= ball.ext / 2:
+            a, b = ball.vel, mirr.p2 - mirr.p1
+            print(u, d, p)
+            circle(p.x, p.y, 10)
+            line(p.x, p.y, ball.pos.x, ball.pos.y)
+            n = (ball.pos - p).normalize()
+            d = ball.vel
+            ball.pos.add(n*(ball.ext/2))
+            ball.vel = d - 2 * (d.dot(n)) * n
+        else:
+            ball.move()
             
     
     
