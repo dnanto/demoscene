@@ -12,14 +12,8 @@ class Cell(object):
         fill(200, 200, 200)
         square(self.x, self.y, self.e)
         noFill()
-    def __hash__(self):
-        return hash((self.x, self.y))
-    def __eq__(self, other):
-        x, y = (other.x, other.y) if isinstance(other, Cell) else other
-        return (self.x, self.y) == other
 
-coors = list(product(range(0, w, e), range(0, h, e)))
-grid = {Cell(x, y, e) for x, y in coors if randint(0, 1)}
+grid = {(x, y): Cell(x, y, e) for x, y in product(range(0, w, e), range(0, h, e)) if randint(0, 1)}
 
 def moore(x, y, e):
     return (
@@ -44,7 +38,7 @@ def setup():
 def draw():
     global grid
     clear()
-    sums = { coor: sum(ele in grid for ele in moore(coor[0], coor[1], e)) for coor in coors }
-    grid = {Cell(coor[0], coor[1], e) for coor in coors if (coor not in grid and sums[coor] == 3) or (coor in grid and sums[coor] in (2, 3))}
-    for cell in grid:
+    sums = { coor: sum(ele in grid for ele in moore(coor[0], coor[1], e)) for coor in grid }
+    grid = { coor: Cell(coor[0], coor[1], e) for coor in grid if (coor not in grid and sums[coor] == 3) or (coor in grid and sums[coor] in (2, 3)) }
+    for cell in grid.values():
         cell.draw()
