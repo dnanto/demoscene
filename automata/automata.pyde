@@ -21,18 +21,13 @@ def moore(x, y, e):
     lf = x - e
     lf = lf if lf >= 0 else (w - e)
     dn = y + e
-    dn = dn if dn > h else 0
+    dn = dn if dn < h else 0
     rt = x + e
     rt = rt if rt < w else 0
     return (
-        (x, up),
-        (rt, up),
-        (rt, y),
-        (rt, dn),
-        (x, dn),
-        (lf, dn),
-        (lf, y),
-        (lf, up)
+        (lf, up), (x, up), (rt, up),
+        (lf, y ),          (rt, y ),
+        (lf, dn), (x, dn), (rt, dn)
     )
 
 def setup():
