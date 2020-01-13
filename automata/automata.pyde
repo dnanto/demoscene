@@ -38,7 +38,10 @@ def setup():
 def draw():
     global grid
     clear()
-    sums = { coor: sum(ele in grid for ele in moore(coor[0], coor[1], e)) for coor in grid }
-    grid = { coor: Cell(coor[0], coor[1], e) for coor in grid if (coor not in grid and sums[coor] == 3) or (coor in grid and sums[coor] in (2, 3)) }
     for cell in grid.values():
         cell.draw()
+    coors = product(range(0, w, e), range(0, h, e))
+    sums = { coor: sum(ele in grid for ele in moore(coor[0], coor[1], e)) for coor in coord }
+    grid = { coor: Cell(coor[0], coor[1], e) for coor in coors if (coor not in grid and sums[coor] == 3) or (coor in grid and sums[coor] in (2, 3)) }
+
+    
