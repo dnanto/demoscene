@@ -83,8 +83,8 @@ class Segment(object):
     def draw(self):
         line(self.p1.x, self.p1.y, self.p2.x, self.p2.y)
 
-crc = Circle(PVector(w/4, h/2), PVector(2, 0), PVector(0, 0), 10)
-sqr = Square(PVector(w/2, h/2), 100)
+crc = Circle(PVector(w/2, h/2), PVector(2, 0), PVector(0, 0), 10)
+sqr = Square(PVector(w/3, h/3), 500)
 segs = []
 
 click1 = 0
@@ -95,7 +95,7 @@ def mousePressed():
     elif mouseButton == RIGHT:
         click2 = PVector(mouseX, mouseY)
         click1, click2 = (click1, click2) if click1.x < click2.x else (click2, click1)
-        segments.append(Segment(click1, click2))
+        segs.append(Segment(click1, click2))
 
 def setup():
     frameRate(60)
