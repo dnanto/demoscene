@@ -22,18 +22,22 @@ def point_line_intr(p1, p2, p3):
 def specular_reflection(d, n):
     return d - 2 * (d.dot(n)) * n
 
-def circle_segment_collision(circ, segm):
-    dst = point_line_dist(segm.p1, segm.p2, circ.pos)
-    pnt = point_line_intr(segm.p1, segm.p2, circ.pos)
-    if dst <= circ.ext / 2 and (segm.p1.x < circ.pos.x < segm.p2.x or segm.p1.y < circ.pos.y < segm.p2.y):
+def circle_segment_collision(crc, seg):
+    dst = point_line_dist(seg.p1, seg.p2, crc.pos)
+    pnt = point_line_intr(seg.p1, seg.p2, crc.pos)
+    if dst <= crc.ext / 2 and (seg.p1.x < crc.pos.x < seg.p2.x or seg.p1.y < crc.pos.y < seg.p2.y):
         circle(pnt.x, pnt.y, 10)
-        line(pnt.x, pnt.y, circ.pos.x, circ.pos.y)
+        line(pnt.x, pnt.y, crc.pos.x, crc.pos.y)
         # collision normal
-        n = (circ.pos - pnt).normalize()
+        n = (crc.pos - pnt).normalize()
         # move circle back to minimum collision distance
-        circ.pos.add(n * (circ.ext / 2))
+        crc.pos.add(n * (crc.ext / 2))
         # specular reflection
-        circ.vel = specular_reflection(Circle.vel, n)
+        crc.vel = specular_reflection(crc.vel, n)
+
+def circle_square_collision(crc, sqr):
+    for seg in sqr.sides:
+        circle_segment_collision(crc, seg)
 
 class Circle(object):
     def __init__(self, pos, vel, acc, ext):
@@ -46,16 +50,30 @@ class Circle(object):
         self.vel.add(self.acc);
         self.pos.add(self.vel);
     
-    def collide(self, other):
-        if isinstance(other, Segment):
-            pass
-    
     def draw(self):
         r = self.ext / 2
         f1 = self.pos
         f2 = f1 + self.vel * self.ext / 2
         line(f1.x, f1.y, f2.x, f2.y)
         circle(self.pos.x, self.pos.y, self.ext)
+
+class Square(object):
+    def __init__(self, pos, ext):
+        x, y = pos.x, pos.y
+        self.pos = pos
+        self.ext = ext
+        self.col = (0, 0, 0)
+        self.sides = [
+            Segment(PVector(x, y), PVector(x + ext, y)),
+            Segment(PVector(x + ext, y), PVector(x + ext, y + ext)),
+            Segment(PVector(x, y), PVector(x, y + ext)),
+            Segment(PVector(x, y + ext), PVector(x + ext, y + ext))
+        ]
+    
+    def draw(self):
+        fill(*self.col)
+        square(self.pos.x, self.pos.x, self.ext)
+        noFill()
 
 class Segment(object):
     def __init__(self, p1, p2):
@@ -65,9 +83,9 @@ class Segment(object):
     def draw(self):
         line(self.p1.x, self.p1.y, self.p2.x, self.p2.y)
 
-
-ball = Circle(PVector(w/2, h/2), PVector(2, 0), PVector(0, 0), 10)
-segments = []
+crc = Circle(PVector(w/4, h/2), PVector(2, 0), PVector(0, 0), 10)
+sqr = Square(PVector(w/2, h/2), 100)
+segs = []
 
 click1 = 0
 def mousePressed():
@@ -91,35 +109,37 @@ def draw():
     clear()
 
     # draw
-    ball.draw()
-    for segm in Segments:
-        segm.draw()
+    sqr.draw()
+    for seg in segs:
+        seg.draw()
+    crc.draw()
     
     # ui
     if keyPressed:
         if key == CODED:
             if keyCode == LEFT:
-                ball.vel.rotate(-radians(5))
+                crc.vel.rotate(-radians(5))
             elif keyCode == RIGHT:
-                ball.vel.rotate(radians(5))
+                crc.vel.rotate(radians(5))
         elif key == " ":
-            ball.pos = PVector(w / 2, h / 2)
+            crc.pos = PVector(w / 2, h / 2)
     
     # move
-    ball.move()
+    crc.move()
     
     # collision detection
-    for segm in segments:
-        pass
+    circle_square_collision(crc, sqr)
+    for seg in segs:
+        circle_segment_collision(crc, seg)
 
     # toroidal world
-    if ball.pos.x < 0:
-        ball.pos.x = w
-    elif ball.pos.x > w:
-        ball.pos.x = 0
-    elif ball.pos.y < 0:
-        ball.pos.y = h
-    elif ball.pos.y > h:
-        ball.pos.y = 0
+    if crc.pos.x < 0:
+        crc.pos.x = w
+    elif crc.pos.x > w:
+        crc.pos.x = 0
+    elif crc.pos.y < 0:
+        crc.pos.y = h
+    elif crc.pos.y > h:
+        crc.pos.y = 0
     
     
