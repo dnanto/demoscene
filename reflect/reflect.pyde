@@ -1,4 +1,5 @@
 from random import randint
+from itertools import product
 
 # http://paulbourke.net/geometry/pointlineplane/
 # https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line#Line_defined_by_two_points
@@ -62,7 +63,7 @@ class Square(object):
         x, y = pos.x, pos.y
         self.pos = pos
         self.ext = ext
-        self.col = (0, 0, 0)
+        self.col = (200, 200, 200)
         self.sides = [
             Segment(PVector(x, y), PVector(x + ext, y)),
             Segment(PVector(x + ext, y), PVector(x + ext, y + ext)),
@@ -72,7 +73,7 @@ class Square(object):
     
     def draw(self):
         fill(*self.col)
-        square(self.pos.x, self.pos.x, self.ext)
+        square(self.pos.x, self.pos.y, self.ext)
         noFill()
 
 class Segment(object):
@@ -83,8 +84,26 @@ class Segment(object):
     def draw(self):
         line(self.p1.x, self.p1.y, self.p2.x, self.p2.y)
 
-crc = Circle(PVector(w/2, h/2), PVector(2, 0), PVector(0, 0), 10)
-sqr = Square(PVector(w/3, h/3), 500)
+
+def moore(x, y, e):
+    up = y - e
+    up = up if up >= 0 else (h - e)
+    lf = x - e
+    lf = lf if lf >= 0 else (w - e)
+    dn = y + e
+    dn = dn if dn < h else 0
+    rt = x + e
+    rt = rt if rt < w else 0
+    return (
+        (lf, up), (x, up), (rt, up),
+        (lf, y ),          (rt, y ),
+        (lf, dn), (x, dn), (rt, dn)
+    )
+
+ext = 50
+grid = {(x, y): Square(PVector(x, y), ext) for x, y in product(range(0, w, ext), range(0, h, ext)) if randint(0, 1)}
+
+crc = Circle(PVector(w/3, h/3), PVector(2, 0), PVector(0, 0), 10)
 segs = []
 
 click1 = 0
@@ -106,10 +125,13 @@ def setup():
     stroke(255, 255, 255)
 
 def draw():
+    global grid
+    
     clear()
 
     # draw
-    sqr.draw()
+    for cell in grid.values():
+        cell.draw()
     for seg in segs:
         seg.draw()
     crc.draw()
@@ -128,9 +150,16 @@ def draw():
     crc.move()
     
     # collision detection
-    circle_square_collision(crc, sqr)
+    for cell in grid.values():
+        circle_square_collision(crc, cell)
     for seg in segs:
         circle_segment_collision(crc, seg)
+        
+    # update
+    if frameCount % 120 == 0:
+        coors = product(range(0, w, ext), range(0, h, ext))
+        sums = { coor: sum(ele in grid for ele in moore(coor[0], coor[1], ext)) for coor in coors }
+        grid = { coor: Square(PVector(coor[0], coor[1]), ext) for coor in coors if (coor not in grid and sums[coor] == 3) or (coor in grid and sums[coor] in (2, 3)) }
 
     # toroidal world
     if crc.pos.x < 0:
