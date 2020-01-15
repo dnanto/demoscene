@@ -1,5 +1,3 @@
-from random import randint
-
 # https://en.wikipedia.org/wiki/Quadtree
 
 col = {
@@ -22,15 +20,15 @@ class Circle(object):
 
 class QuadTree(object):
     def __init__(self, x, y, w, h, n, lvl=0, lab="root"):
-        self.lvl, self.lab = lvl, lab
-        self.n = n
         self.x, self.y, self.w, self.h = x, y, w, h
-        self.x1, self.y1, self.x2, self.y2 = x, y, x + w, y + h
+        self.n = n
+        self.lvl, self.lab = lvl, lab
+        
         self.points = []
         self.nw, self.ne, self.se, self. sw = None, None, None, None
     
-    def __repr__(self):
-        return str((self.lvl, self.lab, len(self.points), self.x, self.y, self.x + self.w, self.y + self.h))
+    def subtrees(self):
+        return (self.nw, self.ne, self.se, self.sw)
     
     def subdivide(self):
         lvl = self.lvl + 1
@@ -41,7 +39,7 @@ class QuadTree(object):
         self.sw = QuadTree(self.x, self.y + h, w, h, self.n, lvl, "sw")
         
         for obj in self.points:
-            for tree in (self.nw, self.ne, self.se, self.sw):
+            for tree in self.subtrees():
                 tree.insert(obj)
         
         self.points = []
@@ -49,38 +47,37 @@ class QuadTree(object):
     def insert(self, obj):
         x, y = obj if isinstance(obj, tuple) else (obj.x, obj.y)
         
-        if self.x1 < x < self.x2 and self.y1 < y < self.y2:
+        if self.x < x < self.x + self.w and self.y < y < self.y + self.h:
+            if not self.nw and len(self.points) < self.n:
+                obj.col = col[self.lab]
+                self.points.append(obj)
+                return True
+            
             if not self.nw:
-                if len(self.points) < self.n:
-                    obj.col = col[self.lab]
-                    self.points.append(obj)
-                    return True
-                
                 self.subdivide()
             
-            for tree in (self.nw, self.ne, self.se, self.sw):
+            for tree in self.subtrees():
                 if tree.insert(obj):
                     return True
-        
-        return False
     
-    def draw(self, node="root", lvl=0):
-        print(self)
+    def draw(self):
         rect(self.x, self.y, self.w, self.h)
-        lvl += 1
-        if self.nw:
-            self.nw.draw("nw", lvl)
-        if self.ne:
-            self.ne.draw("ne", lvl)
-        if self.se:
-            self.se.draw("se", lvl)
-        if self.sw:
-            self.sw.draw("sw", lvl)
+        for tree in filter(None, self.subtrees()):
+            tree.draw()
 
 w = 1000
 h = 1000
-n = 100
-r = 10
+n = 10
+r = 5
+
+tree = QuadTree(0, 0, w, h, n)
+circles = []
+
+def mousePressed():
+    global tree, circles
+    ele = Circle(mouseX, mouseY, r)
+    circles.append(ele)
+    tree.insert(ele)
 
 def setup():
     frameRate(60)
@@ -89,20 +86,14 @@ def setup():
     background(0, 0, 0)
     
 def draw():
-    if (frameCount - 1) % (60 * 2) == 0:
-        clear()
+    clear()
         
-        circles = [Circle(randint(0, w), randint(0, h), r, (0, 255, 0)) for _ in range(n)]
-        tree = QuadTree(0, 0, w, h, 4)
+    noFill()
+    stroke(255, 255, 255)
+    tree.draw()
+    noStroke()
+    
+    for ele in circles:
+        ele.draw()
 
-        for ele in circles:
-            tree.insert(ele)
-        
-        noFill()
-        stroke(255, 255, 255)
-        tree.draw()
-        noStroke()
-        
-        for ele in circles:
-            ele.draw()
         
