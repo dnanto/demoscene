@@ -1,3 +1,5 @@
+from random import randint
+
 class Circle(object):
     
     def __init__(self, x, y, r, col=(255, 255, 255)):
@@ -28,14 +30,14 @@ class Bounds(object):
     def __repr__(self):
         return str(self.points())
     
-    def __contains__(self, obj):
-        return self.x1 < obj.x < self.x2 and self.y1 < obj.y < self.y2
+    def __contains__(self, ele):
+        return self.x1 <= ele.x <= self.x2 and self.y1 <= ele.y <= self.y2
     
     def points(self):
         return self.x1, self.y1, self.x2, self.y2
     
-    def intersects(self, bounds):
-        return not ((self.x2 < bounds.x1 or bounds.x2 < self.x1) and (self.y2 < bounds.y1 or bounds.y2 < self.y1))
+    # def intersects(self, bounds):
+    #     return not ((self.x2 < bounds.x1 or bounds.x2 < self.x1) and (self.y2 < bounds.y1 or bounds.y2 < self.y1))
         
     def draw(self, color=(255, 255, 255)):
         noFill()
@@ -52,59 +54,61 @@ class QuadTree(object):
         self.lvl = lvl
         self.lab = lab
         
-        self.objects = []
+        self.elements = []
         self.nw, self.ne, self.se, self.sw = None, None, None, None
         self.subdivided = False
     
     def subtrees(self):
-        return (self.nw, self.ne, self.se, self.sw) if self.subdivided else ()
+        return self.nw, self.ne, self.se, self.sw
     
     def subdivide(self):
-        x, y, w, h = self.bounds.x1, self.bounds.y1, self.bounds.w / 2, self.bounds.h /2
+        x, y, w, h = self.bounds.x1, self.bounds.y1, self.bounds.w / 2.0, self.bounds.h / 2.0
         self.nw = QuadTree(Bounds(x, y, w, h), self.n, self.lvl + 1, "nw")
         self.ne = QuadTree(Bounds(x + w, y, w, h), self.n, self.lvl + 1, "ne")
         self.se = QuadTree(Bounds(x + w, y + h, w, h), self.n, self.lvl + 1, "se")
         self.sw = QuadTree(Bounds(x, y + h, w, h), self.n, self.lvl + 1, "sw")
         
-        for obj in self.objects:
+        for ele in self.elements:
             for tree in self.subtrees():
-                tree.insert(obj)
+                tree.insert(ele)
         
-        self.objects = []
+        self.elements = []
     
-    def insert(self, obj):
-        if not obj in self.bounds:
+    def insert(self, ele):
+        if not ele in self.bounds:
             return False
         
-        if not self.subdivided and len(self.objects) < self.n:
-            obj.col = col[self.lab]
-            self.objects.append(obj)
+        if not self.subdivided and len(self.elements) < self.n:
+            ele.col = col[self.lab]
+            self.elements.append(ele)
             return True
         
         if not self.subdivided:
-            self.subdivided = True
             self.subdivide()
+            self.subdivided = True
         
         for tree in self.subtrees():
-            if tree.insert(obj):
+            if tree.insert(ele):
                 return True
-    
+        
+        print("wtf")
+
     def query(self, bounds):
         if self.bounds.intersects(bounds):
-            for obj in self.objects:
-                if obj in bounds:
-                    yield obj
+            for ele in self.elements:
+                if ele in bounds:
+                    yield ele
 
         for tree in self.subtrees():
-            for obj in tree.query(bounds):
-                yield obj
+            for ele in filter(None, tree.query(bounds)):
+                yield ele
 
     def all(self):
-        for obj in self.objects:
-            yield obj
-        for tree in self.subtrees():
-            for obj in tree.all():
-                yield obj
+        for ele in self.elements:
+            yield ele
+        for tree in filter(None, self.subtrees()):
+            for ele in tree.all():
+                yield ele
 
     def draw(self):
         self.bounds.draw()
@@ -113,9 +117,9 @@ class QuadTree(object):
     
     def pprint(self):
         print(self.lvl * '\t' + self.lab)
-        for obj in self.objects:
-            print(self.lvl * '\t' + len(self.lab) * " " + "\t" + str(obj.x) + ", " + str(obj.y))
-        for tree in self.subtrees():
+        for ele in self.elements:
+            print(self.lvl * '\t' + len(self.lab) * " " + "\t" + str(ele.x) + ", " + str(ele.y))
+        for tree in filter(None, self.subtrees()):
             tree.pprint()
 
 col = {
@@ -129,40 +133,27 @@ col = {
 w = 1000
 h = 1000
 n = 1
-r = 10
+r = 2
 
 drag = None
 release = None
 
 tree = QuadTree(Bounds(0, 0, w, h), n)
-circles = []
+circles = {Circle(randint(0, w), randint(0, h), r) for _ in range(1000)}
 
-def keyPressed():
-    global tree, circles
-    if key in (ENTER, RETURN):
-        inserted = set(tree.query(Bounds(0, 0, w, h)))
-        print(">", len(inserted), sum(1 for _ in tree.all()))
-    if key == ' ':
-        ele = Circle(mouseX, mouseY, r)
-        circles.append(ele)
-        tree.insert(ele)
-    if key == 't':
-        print()
-        tree.pprint()
-        print()
-        
-def mousePressed():
-    global drag
-    drag = (mouseX, mouseY) 
+for ele in circles:
+    tree.insert(ele)
+    
+counts = {}
+for ele in tree.all():
+    k = (ele.x, ele.y)
+    counts[k] = counts.get(k, 0) + 1
+    
+for k, v in counts.items():
+    if v > 1:
+        print(k, v)
 
-def mouseReleased():
-    release = (mouseX, mouseY)
-    stroke(150, 0, 150)
-    bounds = Bounds(drag[0], drag[1], abs(drag[0] - release[0]), abs(drag[1] - release[1]))
-    bounds.draw((255, 0, 0))
-    for obj in tree.query(bounds):
-        print(">>", obj)
-        obj.col = (255, 255, 0)
+print(len(circles), sum(1 for _ in tree.all()), set(counts.values()))
     
 def setup():
     frameRate(60)
@@ -172,7 +163,7 @@ def setup():
     
 def draw():
     clear()
-        
+    
     noFill()
     stroke(255, 255, 255)
     tree.draw()
