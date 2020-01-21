@@ -29,8 +29,8 @@ def draw():
         stroke(randint(0, 255), randint(0, 255), randint(0, 255))
         # 0: draw a line segment ending in a leaf
         # 1: draw a line segment
-        # [: push position and angle, turn left 45 degrees
-        # ]: pop position and angle, turn right 45 degrees 
+        # [: push position and angle, turn
+        # ]: pop position and angle, turn 
         if e == "[":
             pos.append((x, y, deg))
             deg -= randint(0, 360)
