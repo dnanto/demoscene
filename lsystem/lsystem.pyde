@@ -15,6 +15,7 @@ def setup():
     background(0, 0, 0)
 
 def draw():
+    clear()
     stroke(randint(0, 255))
     strokeWeight(2)
 
@@ -32,10 +33,10 @@ def draw():
         # ]: pop position and angle, turn right 45 degrees 
         if e == "[":
             pos.append((x, y, deg))
-            deg -= frameCount % 360
+            deg -= randint(0, 360)
         elif e == "]":
             x, y, deg = pos.pop()
-            deg += frameCount % 360 
+            deg += randint(0, 360) 
         elif e == "0":
             line(x, y, x + s * sin(radians(deg)), y - s * cos(radians(deg)))
         elif e == "1":
